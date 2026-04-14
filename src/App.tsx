@@ -85,10 +85,20 @@ const uploadToCloudinary = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-    const response = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
-    if (!response.ok) throw new Error("Upload failed");
-    const data = await response.json();
-    return data.secure_url;
+    
+    try {
+        const response = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Cloudinary Upload Error:", errorData);
+            throw new Error(errorData.error?.message || "Upload failed");
+        }
+        const data = await response.json();
+        return data.secure_url;
+    } catch (err) {
+        console.error("Upload process error:", err);
+        throw err;
+    }
 };
 
 // --- Components ---
@@ -96,10 +106,10 @@ const uploadToCloudinary = async (file: File) => {
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const isAdmin = location.pathname.startsWith('/admin');
+  const isAuthPage = location.pathname.startsWith('/admin');
   
   useEffect(() => setIsOpen(false), [location]);
-  if (isAdmin) return null;
+  if (isAuthPage) return null;
 
   return (
     <>
@@ -135,7 +145,8 @@ const Navbar = () => {
 
 const Footer = ({ content }: any) => {
   const location = useLocation();
-  if (location.pathname.startsWith('/admin')) return null;
+  const isAuthPage = location.pathname.startsWith('/admin');
+  if (isAuthPage) return null;
 
   return (
     <footer className="py-20 px-6 sm:px-12 border-t border-slate-900/5 bg-pastel-pink/10">
@@ -147,7 +158,6 @@ const Footer = ({ content }: any) => {
         <div className="flex flex-wrap justify-center gap-8 text-[10px] font-bold text-slate-400 tracking-widest uppercase items-center">
           <Link to="/" className="hover:text-pink-deep transition-colors">Home</Link>
           <Link to="/portfolio" className="hover:text-pink-deep transition-colors">Gallery</Link>
-          <Link to="/admin" className="hover:text-pink-deep transition-colors">Admin</Link>
         </div>
         <div className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">© {content.year} JESSKAE</div>
       </div>
@@ -398,12 +408,37 @@ const AdminPage = ({ user, artworks, categories, content, onRefresh }: any) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const navigate = useNavigate();
 
+
     const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 1024);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    if (!user) return (
+        <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-white/20 backdrop-blur-xl">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="glass p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] w-full max-w-md shadow-2xl text-center">
+                <h2 className="font-display text-4xl font-black text-slate-900 mb-8 tracking-tighter">Portal Access</h2>
+                <form onSubmit={async (e) => {
+                    e.preventDefault(); setSaving(true);
+                    const { error } = await supabase.auth.signInWithPassword({ 
+                        email: (e.target as any).email.value, 
+                        password: (e.target as any).password.value 
+                    });
+                    if (error) alert(error.message); 
+                    setSaving(false);
+                }} className="space-y-4">
+                    <input name="email" required type="email" placeholder="Email" className="w-full px-6 py-4 rounded-xl bg-slate-50 border border-slate-100 font-medium outline-none focus:ring-2 focus:ring-pink-soft transition-all" />
+                    <input name="password" required type="password" placeholder="Password" className="w-full px-6 py-4 rounded-xl bg-slate-50 border border-slate-100 font-medium outline-none focus:ring-2 focus:ring-pink-soft transition-all" />
+                    <button disabled={saving} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-pink-deep transition-all shadow-lg active:scale-95 disabled:opacity-50">
+                        {saving ? "Signing in..." : "Login"}
+                    </button>
+                </form>
+                <Link to="/" className="mt-8 block font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-900">Cancel</Link>
+            </motion.div>
+        </div>
+    );
 
     const saveChanges = async () => {
         setSaving(true);
@@ -430,9 +465,23 @@ const AdminPage = ({ user, artworks, categories, content, onRefresh }: any) => {
         if (!newItem.image_url) return alert("Upload an image first.");
         if (!newItem.category_id) return alert("Select a category.");
         setSaving(true);
-        const { error } = await supabase.from('artworks').insert([newItem]);
-        if (error) alert(error.message);
-        else { setModal(false); setNewItem({ title: "", category_id: "", image_url: "", is_featured: false }); onRefresh(); }
+        try {
+            const { error } = await supabase.from('artworks').insert([{
+                ...newItem,
+                type: 'artwork' // Explicitly set type to avoid DB constraint error
+            }]);
+            if (error) {
+                console.error("Supabase Insert Error:", error);
+                alert(`Error: ${error.message}`);
+            } else {
+                setModal(false);
+                setNewItem({ title: "", category_id: "", image_url: "", is_featured: false });
+                onRefresh();
+            }
+        } catch (err) {
+            console.error("Unexpected Error adding artwork:", err);
+            alert("An unexpected error occurred.");
+        }
         setSaving(false);
     };
 
@@ -445,23 +494,6 @@ const AdminPage = ({ user, artworks, categories, content, onRefresh }: any) => {
         }
     };
 
-    if (!user) return (
-        <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-white/20 backdrop-blur-xl">
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="glass p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] w-full max-w-md shadow-2xl text-center">
-                <h2 className="font-display text-4xl font-black text-slate-900 mb-8 tracking-tighter">Portal Access</h2>
-                <form onSubmit={async (e) => {
-                    e.preventDefault(); setSaving(true);
-                    const { error } = await supabase.auth.signInWithPassword({ email: (e.target as any).email.value, password: (e.target as any).password.value });
-                    if (error) alert(error.message); setSaving(false);
-                }} className="space-y-4">
-                    <input name="email" required type="email" placeholder="Email" className="w-full px-6 py-4 rounded-xl bg-slate-50 border border-slate-100 font-medium outline-none focus:ring-2 focus:ring-pink-soft transition-all" />
-                    <input name="password" required type="password" placeholder="Password" className="w-full px-6 py-4 rounded-xl bg-slate-50 border border-slate-100 font-medium outline-none focus:ring-2 focus:ring-pink-soft transition-all" />
-                    <button disabled={saving} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-pink-deep transition-all shadow-lg active:scale-95 disabled:opacity-50">Login</button>
-                </form>
-                <Link to="/" className="mt-8 block font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-900">Cancel</Link>
-            </motion.div>
-        </div>
-    );
 
     return (
         <div className={`min-h-screen ${!isMobile ? 'pl-80' : ''}`}>
@@ -640,6 +672,7 @@ const AdminPage = ({ user, artworks, categories, content, onRefresh }: any) => {
         </div>
     );
 };
+
 
 // --- Main App ---
 
