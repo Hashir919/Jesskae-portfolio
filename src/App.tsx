@@ -147,7 +147,7 @@ const Footer = ({ content }: any) => {
         <div className="flex flex-wrap justify-center gap-8 text-[10px] font-bold text-slate-400 tracking-widest uppercase items-center">
           <Link to="/" className="hover:text-pink-deep transition-colors">Home</Link>
           <Link to="/portfolio" className="hover:text-pink-deep transition-colors">Gallery</Link>
-          <Link to="/admin" className="text-slate-100 hover:text-slate-300">Admin</Link>
+          <Link to="/admin" className="hover:text-pink-deep transition-colors">Admin</Link>
         </div>
         <div className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">© {content.year} JESSKAE</div>
       </div>
