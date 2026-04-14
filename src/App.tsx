@@ -446,65 +446,101 @@ const AdminPage = ({ user, artworks, categories, content, onRefresh }: any) => {
     };
 
     if (!user) return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-white/20 backdrop-blur-xl">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[4rem] w-full max-w-md shadow-2xl text-center">
-                <h2 className="font-display text-4xl font-black text-slate-900 mb-10 tracking-tighter">Portal Access</h2>
+        <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-white/20 backdrop-blur-xl">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="glass p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] w-full max-w-md shadow-2xl text-center">
+                <h2 className="font-display text-4xl font-black text-slate-900 mb-8 tracking-tighter">Portal Access</h2>
                 <form onSubmit={async (e) => {
                     e.preventDefault(); setSaving(true);
                     const { error } = await supabase.auth.signInWithPassword({ email: (e.target as any).email.value, password: (e.target as any).password.value });
                     if (error) alert(error.message); setSaving(false);
                 }} className="space-y-4">
-                    <input name="email" type="email" placeholder="Email" className="w-full px-6 py-4 rounded-xl bg-slate-50 border border-slate-100 font-medium" />
-                    <input name="password" type="password" placeholder="Password" className="w-full px-6 py-4 rounded-xl bg-slate-50 border border-slate-100 font-medium" />
-                    <button disabled={saving} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-pink-deep">Login</button>
+                    <input name="email" required type="email" placeholder="Email" className="w-full px-6 py-4 rounded-xl bg-slate-50 border border-slate-100 font-medium outline-none focus:ring-2 focus:ring-pink-soft transition-all" />
+                    <input name="password" required type="password" placeholder="Password" className="w-full px-6 py-4 rounded-xl bg-slate-50 border border-slate-100 font-medium outline-none focus:ring-2 focus:ring-pink-soft transition-all" />
+                    <button disabled={saving} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-pink-deep transition-all shadow-lg active:scale-95 disabled:opacity-50">Login</button>
                 </form>
-                <Link to="/" className="mt-8 block font-black text-[10px] uppercase tracking-widest text-slate-400">Cancel</Link>
+                <Link to="/" className="mt-8 block font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-900">Cancel</Link>
             </motion.div>
         </div>
     );
 
     return (
         <div className={`min-h-screen ${!isMobile ? 'pl-80' : ''}`}>
-            {isMobile && <div className="fixed top-6 right-6 z-[60]"><button onClick={() => setIsSidebarOpen(true)} className="glass p-4 rounded-2xl text-pink-deep"><Menu /></button></div>}
-            {(isSidebarOpen || !isMobile) && <AdminSidebar active={tab} setTab={setTab} onLogout={async () => { await supabase.auth.signOut(); navigate("/"); }} isMobile={isMobile} onClose={() => setIsSidebarOpen(false)} />}
-            <main className="p-8 sm:p-16 max-w-6xl mx-auto">
-                 <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 sm:mb-16 gap-6">
-                    <div><h2 className="font-display text-5xl font-black text-slate-900 tracking-tighter capitalize">{tab}</h2></div>
+            {isMobile && (
+                <div className="fixed top-6 right-6 z-[60] flex gap-2">
+                    <button onClick={() => setIsSidebarOpen(true)} className="glass p-4 rounded-2xl text-pink-deep shadow-lg"><Menu className="w-6 h-6" /></button>
+                </div>
+            )}
+            
+            <AnimatePresence>
+                {(isSidebarOpen || !isMobile) && (
+                    <motion.div 
+                        initial={isMobile ? { x: -300, opacity: 0 } : { opacity: 1 }}
+                        animate={isMobile ? { x: 0, opacity: 1 } : { opacity: 1 }}
+                        exit={isMobile ? { x: -300, opacity: 0 } : { opacity: 1 }}
+                        className="fixed inset-y-0 left-0 z-50 overflow-hidden"
+                    >
+                        <AdminSidebar 
+                            active={tab} setTab={setTab} 
+                            onLogout={async () => { await supabase.auth.signOut(); navigate("/"); }} 
+                            isMobile={isMobile} onClose={() => setIsSidebarOpen(false)} 
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {isMobile && isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 transition-opacity" />}
+
+            <main className="p-6 sm:p-12 lg:p-16 max-w-7xl mx-auto">
+                 <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 sm:mb-16 gap-6 pt-16 sm:pt-0">
+                    <div>
+                        <h2 className="font-display text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter capitalize">{tab}</h2>
+                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Management Portal</p>
+                    </div>
                     {tab !== 'dashboard' && tab !== 'portfolio' && tab !== 'categories' && (
-                        <button onClick={saveChanges} className="bg-slate-900 text-white px-10 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest">Publish Changes</button>
+                        <button onClick={saveChanges} disabled={saving} className="w-full sm:w-auto bg-slate-900 text-white px-10 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-pink-deep transition-all active:scale-95">
+                            {saving ? "Saving..." : "Publish Changes"}
+                        </button>
                     )}
                 </header>
                 
                 {tab === 'dashboard' && (
-                    <div className="grid sm:grid-cols-3 gap-8">
-                        <div className="glass p-12 rounded-[3.5rem] text-center font-display uppercase tracking-widest text-[10px] text-slate-400 shadow-sm"><p className="mb-4">Artworks</p><p className="text-7xl font-black text-slate-900">{artworks.length}</p></div>
-                        <div className="glass p-12 rounded-[3.5rem] text-center font-display uppercase tracking-widest text-[10px] text-slate-400 shadow-sm"><p className="mb-4">Categories</p><p className="text-7xl font-black text-slate-900">{categories.length}</p></div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                        <div className="glass p-8 sm:p-12 rounded-3xl sm:rounded-[3.5rem] text-center font-display uppercase tracking-widest text-[10px] text-slate-400 shadow-sm">
+                            <p className="mb-4">Artworks</p>
+                            <p className="text-6xl sm:text-7xl font-black text-slate-900">{artworks.length}</p>
+                        </div>
+                        <div className="glass p-8 sm:p-12 rounded-3xl sm:rounded-[3.5rem] text-center font-display uppercase tracking-widest text-[10px] text-slate-400 shadow-sm">
+                            <p className="mb-4">Categories</p>
+                            <p className="text-6xl sm:text-7xl font-black text-slate-900">{categories.length}</p>
+                        </div>
                     </div>
                 )}
 
                 {tab === 'portfolio' && (
-                    <div className="space-y-10">
-                        <div className="flex justify-end"><button onClick={() => setModal(true)} className="bg-pink-deep text-white px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest"><Plus /> Add Artwork</button></div>
+                    <div className="space-y-6 sm:space-y-10">
+                        <div className="flex justify-end"><button onClick={() => setModal(true)} className="w-full sm:w-auto bg-pink-deep text-white px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"><Plus /> Add Artwork</button></div>
                         <div className="grid grid-cols-1 gap-4">
                             {artworks.map((art: any) => (
-                                <div key={art.id} className="flex items-center gap-6 p-5 glass rounded-3xl group">
-                                    <img src={art.image_url} className="w-20 h-20 rounded-xl object-cover" />
+                                <div key={art.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-4 sm:p-5 glass rounded-2xl sm:rounded-3xl group">
+                                    <img src={art.image_url} className="w-full sm:w-20 h-48 sm:h-20 rounded-xl object-cover" />
                                     <div className="flex-1">
-                                        <p className="font-black text-slate-900 uppercase tracking-tight">{art.title}</p>
+                                        <p className="font-black text-slate-900 uppercase tracking-tight text-sm sm:text-base">{art.title}</p>
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{art.categories?.name} {art.is_featured && '• Featured'}</p>
                                     </div>
-                                    <button onClick={async () => { if(confirm("Delete?")) { await supabase.from('artworks').delete().eq('id', art.id); onRefresh(); } }} className="text-slate-200 hover:text-red-500 transition-colors"><Trash2 /></button>
+                                    <div className="flex justify-end w-full sm:w-auto">
+                                        <button onClick={async () => { if(confirm("Delete?")) { await supabase.from('artworks').delete().eq('id', art.id); onRefresh(); } }} className="p-2 sm:p-0 text-slate-200 hover:text-red-500 transition-colors"><Trash2 className="w-6 h-6 sm:w-5 sm:h-5" /></button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                         {modal && (
-                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md">
-                                <form onSubmit={addArt} className="bg-white p-12 rounded-[4rem] w-full max-w-2xl grid md:grid-cols-2 gap-10 relative">
-                                    <button type="button" onClick={() => setModal(false)} className="absolute top-10 right-10"><X /></button>
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/40 backdrop-blur-md">
+                                <form onSubmit={addArt} className="bg-white p-8 sm:p-12 rounded-3xl sm:rounded-[3rem] w-full max-w-2xl max-h-[90vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10 relative">
+                                    <button type="button" onClick={() => setModal(false)} className="absolute top-6 right-6 sm:top-10 sm:right-10 text-slate-400 hover:text-slate-900"><X /></button>
                                     <div className="space-y-6">
-                                        <h4 className="font-display text-4xl font-black uppercase tracking-tighter">New Piece</h4>
-                                        <input placeholder="Artwork Title" required className="w-full px-6 py-4 rounded-xl bg-slate-50 border-none" value={newItem.title} onChange={e => setNewItem({...newItem, title: e.target.value})} />
-                                        <select required className="w-full px-6 py-4 rounded-xl bg-slate-50 border-none font-bold text-slate-400" value={newItem.category_id} onChange={e => setNewItem({...newItem, category_id: e.target.value})}>
+                                        <h4 className="font-display text-3xl sm:text-4xl font-black uppercase tracking-tighter">New Piece</h4>
+                                        <input placeholder="Artwork Title" required className="w-full px-6 py-4 rounded-xl bg-slate-50 border-none outline-none font-bold" value={newItem.title} onChange={e => setNewItem({...newItem, title: e.target.value})} />
+                                        <select required className="w-full px-6 py-4 rounded-xl bg-slate-50 border-none font-bold text-slate-400 outline-none" value={newItem.category_id} onChange={e => setNewItem({...newItem, category_id: e.target.value})}>
                                             <option value="">Select Category</option>
                                             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                         </select>
@@ -514,11 +550,14 @@ const AdminPage = ({ user, artworks, categories, content, onRefresh }: any) => {
                                                 {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} Upload Image
                                             </label>
                                         </div>
-                                        <label className="flex items-center gap-4 cursor-pointer text-xs font-bold text-slate-500"><input type="checkbox" checked={newItem.is_featured} onChange={e => setNewItem({...newItem, is_featured: e.target.checked})} /> Feature on Home</label>
-                                        <button disabled={uploading || saving} className="w-full bg-slate-900 text-white py-5 rounded-xl font-black uppercase tracking-widest">Create Piece</button>
+                                        <label className="flex items-center gap-4 cursor-pointer text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                            <input type="checkbox" checked={newItem.is_featured} onChange={e => setNewItem({...newItem, is_featured: e.target.checked})} className="w-4 h-4 accent-pink-deep" /> 
+                                            Feature on Home
+                                        </label>
+                                        <button disabled={uploading || saving} className="w-full bg-slate-900 text-white py-5 rounded-xl font-black uppercase tracking-widest hover:bg-pink-deep transition-colors shadow-xl active:scale-95 disabled:opacity-50">Create Piece</button>
                                     </div>
-                                    <div className="flex items-center justify-center bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200">
-                                        {newItem.image_url ? <img src={newItem.image_url} className="w-full h-full object-cover rounded-[2.5rem]" /> : <ImageIcon className="w-12 h-12 opacity-10" />}
+                                    <div className="flex items-center justify-center bg-slate-50 rounded-2xl sm:rounded-[2.5rem] border-2 border-dashed border-slate-200 min-h-[250px]">
+                                        {newItem.image_url ? <img src={newItem.image_url} className="w-full h-full object-cover rounded-2xl sm:rounded-[2.5rem]" /> : <ImageIcon className="w-12 h-12 opacity-10" />}
                                     </div>
                                 </form>
                             </div>
@@ -527,13 +566,16 @@ const AdminPage = ({ user, artworks, categories, content, onRefresh }: any) => {
                 )}
 
                 {tab === 'categories' && (
-                    <div className="space-y-8 glass p-12 rounded-[4rem]">
-                        <div className="flex justify-between items-center"><h4 className="font-display text-2xl font-black uppercase">Categories Tracker</h4><button onClick={addCategory} className="bg-slate-900 text-white p-4 rounded-xl"><Plus /></button></div>
-                        <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-8 glass p-8 sm:p-12 rounded-3xl sm:rounded-[3.5rem]">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <h4 className="font-display text-2xl font-black uppercase tracking-tight">Categories Tracker</h4>
+                            <button onClick={addCategory} className="w-full sm:w-auto bg-slate-900 text-white p-4 rounded-xl flex items-center justify-center hover:bg-pink-deep transition-all"><Plus /></button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {categories.map(cat => (
-                                <div key={cat.id} className="flex justify-between items-center p-6 bg-white/60 rounded-2xl border border-white">
-                                    <span className="font-black text-slate-900 uppercase tracking-tight flex items-center gap-3"><Hash className="w-4 h-4 text-pink-deep" /> {cat.name}</span>
-                                    <button onClick={async () => { if(confirm("Remove?")) { await supabase.from('categories').delete().eq('id', cat.id); onRefresh(); } }} className="text-slate-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                                <div key={cat.id} className="flex justify-between items-center p-5 sm:p-6 bg-white/60 rounded-2xl border border-white">
+                                    <span className="font-black text-slate-900 uppercase tracking-tight flex items-center gap-3 text-sm sm:text-base"><Hash className="w-4 h-4 text-pink-deep" /> {cat.name}</span>
+                                    <button onClick={async () => { if(confirm("Remove?")) { await supabase.from('categories').delete().eq('id', cat.id); onRefresh(); } }} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                                 </div>
                             ))}
                         </div>
@@ -541,26 +583,29 @@ const AdminPage = ({ user, artworks, categories, content, onRefresh }: any) => {
                 )}
 
                 {tab === 'about' && (
-                    <div className="grid grid-cols-1 gap-8 glass p-12 rounded-[4rem]">
-                        <div className="flex flex-col items-center gap-8">
-                            <div className="aspect-[3/4] w-64 rounded-[2rem] bg-slate-50 relative group overflow-hidden shadow-2xl">
-                                {edit.about_image_url ? <img src={edit.about_image_url} className="w-full h-full object-cover" /> : <User className="w-12 h-12 opacity-10" />}
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                    <input type="file" accept="image/*" onChange={(e: any) => handleCloudinaryUpload(e.target.files[0], true)} className="hidden" id="abt-up" />
-                                    <label htmlFor="abt-up" className="bg-white px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest cursor-pointer">Update Photo</label>
+                    <div className="grid grid-cols-1 gap-8 sm:gap-12 glass p-6 sm:p-12 rounded-3xl sm:rounded-[3.5rem]">
+                        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+                            <div className="flex flex-col items-center gap-6">
+                                <div className="aspect-[3/4] w-full sm:w-64 rounded-2xl sm:rounded-[2.5rem] bg-slate-50 relative group overflow-hidden shadow-2xl">
+                                    {edit.about_image_url ? <img src={edit.about_image_url} className="w-full h-full object-cover" /> : <User className="w-12 h-12 opacity-10 font-bold" />}
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                        <input type="file" accept="image/*" onChange={(e: any) => handleCloudinaryUpload(e.target.files[0], true)} className="hidden" id="abt-up" />
+                                        <label htmlFor="abt-up" className="bg-white px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest cursor-pointer hover:bg-pink-soft">Update Photo</label>
+                                    </div>
                                 </div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Profile Asset</p>
                             </div>
-                        </div>
-                        <div className="space-y-6">
-                            <div className="space-y-2"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Bio Header</label><input value={edit.about_title} onChange={e => setEdit({...edit, about_title: e.target.value})} className="w-full bg-slate-50 p-6 rounded-2xl font-black text-2xl outline-none" /></div>
-                            <div className="space-y-2"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Short Intro</label><textarea rows={3} value={edit.about_text_1} onChange={e => setEdit({...edit, about_text_1: e.target.value})} className="w-full bg-slate-50 p-6 rounded-2xl font-medium outline-none" /></div>
-                            <div className="space-y-2"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Full Narrative</label><textarea rows={8} value={edit.about_page_content} onChange={e => setEdit({...edit, about_page_content: e.target.value})} className="w-full bg-slate-50 p-6 rounded-2xl font-medium outline-none" /></div>
+                            <div className="flex-1 space-y-6">
+                                <div className="space-y-2"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Bio Header</label><input value={edit.about_title} onChange={e => setEdit({...edit, about_title: e.target.value})} className="w-full bg-slate-50 p-5 sm:p-6 rounded-2xl font-black text-xl sm:text-2xl outline-none focus:ring-2 focus:ring-pink-soft transition-all" /></div>
+                                <div className="space-y-2"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Short Intro</label><textarea rows={3} value={edit.about_text_1} onChange={e => setEdit({...edit, about_text_1: e.target.value})} className="w-full bg-slate-50 p-5 sm:p-6 rounded-2xl font-medium outline-none focus:ring-2 focus:ring-pink-soft transition-all text-sm sm:text-base" /></div>
+                                <div className="space-y-2"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Full Narrative</label><textarea rows={10} value={edit.about_page_content} onChange={e => setEdit({...edit, about_page_content: e.target.value})} className="w-full bg-slate-50 p-5 sm:p-6 rounded-2xl font-medium outline-none focus:ring-2 focus:ring-pink-soft transition-all text-sm sm:text-base leading-relaxed" /></div>
+                            </div>
                         </div>
                     </div>
                 )}
 
                 {tab === 'contact' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                         {[
                             { k: 'contact_email', l: 'Inquiry Email' },
                             { k: 'contact_tagline', l: 'Contact Tagline' },
@@ -568,16 +613,16 @@ const AdminPage = ({ user, artworks, categories, content, onRefresh }: any) => {
                             { k: 'social_instagram', l: 'Instagram URL' },
                             { k: 'social_discord', l: 'Discord Tag' }
                         ].map(f => (
-                            <div key={f.k} className="glass p-8 rounded-3xl space-y-3">
+                            <div key={f.k} className="glass p-6 sm:p-8 rounded-2xl sm:rounded-3xl space-y-3">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">{f.l}</label>
-                                <input value={edit[f.k]} onChange={e => setEdit({...edit, [f.k]: e.target.value})} className="w-full bg-white/40 p-5 rounded-xl font-bold border-none outline-none" />
+                                <input value={edit[f.k]} onChange={e => setEdit({...edit, [f.k]: e.target.value})} className="w-full bg-white/40 p-5 rounded-xl font-bold border-none outline-none focus:ring-2 focus:ring-pink-soft transition-all text-sm sm:text-base" />
                             </div>
                         ))}
                     </div>
                 )}
 
                 {tab === 'settings' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 glass p-12 rounded-[4rem]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 glass p-6 sm:p-12 rounded-3xl sm:rounded-[3.5rem]">
                         {[
                             { k: 'hero_title', l: 'Hero Title' },
                             { k: 'hero_subtitle', l: 'Hero Subtitle' },
@@ -586,7 +631,7 @@ const AdminPage = ({ user, artworks, categories, content, onRefresh }: any) => {
                         ].map(f => (
                             <div key={f.k} className="space-y-3">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">{f.l}</label>
-                                <input value={edit[f.k]} onChange={e => setEdit({...edit, [f.k]: e.target.value})} className="w-full bg-slate-50 p-6 rounded-2xl font-black text-xl outline-none" />
+                                <input value={edit[f.k]} onChange={e => setEdit({...edit, [f.k]: e.target.value})} className="w-full bg-slate-50 p-5 sm:p-6 rounded-2xl font-black text-lg sm:text-xl outline-none focus:ring-2 focus:ring-pink-soft transition-all" />
                             </div>
                         ))}
                     </div>
