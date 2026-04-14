@@ -27,7 +27,7 @@ import {
   Hash
 } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
-import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 
 // --- Cloudinary Config ---
@@ -213,9 +213,9 @@ const HomePage = ({ artworks, content }: any) => {
       <section className="py-24 sm:py-32 px-6 max-w-6xl mx-auto section-aura">
         <div className="grid lg:grid-cols-2 gap-16 sm:gap-24 items-center">
           <div className="order-2 lg:order-1">
-             <div className="aspect-[4/5] rounded-[2.5rem] sm:rounded-[3rem] glossy-blob overflow-hidden bg-white/30 relative flex items-center justify-center group shadow-2xl">
+             <div className="aspect-[4/5] rounded-[2.5rem] sm:rounded-[3rem] glossy-blob overflow-hidden bg-slate-50/50 relative flex items-center justify-center group shadow-2xl p-4">
                 {content.about_image_url ? (
-                  <img src={content.about_image_url} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105" alt="About Jesskae" />
+                  <img src={content.about_image_url} className="w-full h-full object-contain transition-transform duration-[2s] group-hover:scale-105" alt="About Jesskae" />
                 ) : (
                   <Sparkles className="w-24 h-24 text-pink-soft opacity-20" />
                 )}
@@ -239,15 +239,17 @@ const HomePage = ({ artworks, content }: any) => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-10">
           {(featured.length > 0 ? featured : artworks.slice(0, 4)).map((art: any) => (
-            <motion.div key={art.id} whileHover={{ y: -10 }} className="group relative h-[450px] sm:h-[600px] overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] bg-white shadow-xl shadow-pink-100/20 cursor-pointer">
-              <img src={art.image_url} alt={art.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s]" />
-              <div className="absolute inset-0 bg-gradient-to-t from-pink-deep/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 p-8 sm:p-12 flex flex-col justify-end">
-                <h4 className="font-display font-black text-3xl sm:text-4xl text-white mb-2">{art.title}</h4>
-                <div className="flex gap-3">
-                   <span className="px-4 py-1.5 rounded-full glass text-[8px] sm:text-[10px] text-white font-bold uppercase tracking-widest">{art.categories?.name || 'Art'}</span>
+            <Link to={`/portfolio/${art.id}`} key={art.id}>
+              <motion.div whileHover={{ y: -10 }} className="group relative h-[450px] sm:h-[600px] overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] bg-slate-50/80 shadow-xl shadow-pink-100/20 cursor-pointer flex items-center justify-center p-6">
+                <img src={art.image_url} alt={art.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-[2s]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-pink-deep/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 p-8 sm:p-12 flex flex-col justify-end">
+                  <h4 className="font-display font-black text-3xl sm:text-4xl text-white mb-2">{art.title}</h4>
+                  <div className="flex gap-3">
+                     <span className="px-4 py-1.5 rounded-full glass text-[8px] sm:text-[10px] text-white font-bold uppercase tracking-widest">{art.categories?.name || 'Art'}</span>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </Link>
           ))}
         </div>
       </section>
@@ -276,8 +278,8 @@ const AboutPage = ({ content }: any) => (
     <div className="grid gap-8 sm:gap-12 text-slate-600 text-lg sm:text-xl font-medium leading-relaxed">
        <div className="glass p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] border-pink-soft/20 overflow-hidden relative">
           <div className="grid md:grid-cols-[1fr_2fr] gap-8 sm:gap-10 items-center">
-             <div className="aspect-[3/4] rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-50 shadow-lg">
-                {content.about_image_url && <img src={content.about_image_url} className="w-full h-full object-cover" />}
+             <div className="aspect-[3/4] rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-50 shadow-lg flex items-center justify-center p-4">
+                {content.about_image_url && <img src={content.about_image_url} className="w-full h-full object-contain" />}
              </div>
              <div className="text-center md:text-left">
                 <p className="mb-6 sm:mb-10 text-slate-900 text-xl sm:text-2xl font-bold leading-snug">"{content.about_text_1}"</p>
@@ -353,10 +355,12 @@ const PortfolioGallery = ({ artworks, categories }: any) => {
        </div>
        <div className="responsive-grid">
           {filtered.map((art: any) => (
-             <motion.div key={art.id} layout className="group aspect-square rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-white shadow-lg relative cursor-zoom-in">
-                <img src={art.image_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s]" />
+            <Link to={`/portfolio/${art.id}`} key={art.id}>
+              <motion.div layout className="group aspect-square rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-slate-50/50 shadow-lg relative cursor-zoom-in flex items-center justify-center p-4">
+                <img src={art.image_url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-[1.5s]" />
                 <div className="absolute inset-0 bg-pink-deep/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-             </motion.div>
+              </motion.div>
+            </Link>
           ))}
        </div>
     </motion.div>
@@ -554,7 +558,9 @@ const AdminPage = ({ user, artworks, categories, content, onRefresh }: any) => {
                         <div className="grid grid-cols-1 gap-4">
                             {artworks.map((art: any) => (
                                 <div key={art.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-4 sm:p-5 glass rounded-2xl sm:rounded-3xl group">
-                                    <img src={art.image_url} className="w-full sm:w-20 h-48 sm:h-20 rounded-xl object-cover" />
+                                    <div className="w-full sm:w-20 h-48 sm:h-20 rounded-xl bg-slate-100/50 flex items-center justify-center overflow-hidden p-2">
+                                        <img src={art.image_url} className="w-full h-full object-contain" />
+                                    </div>
                                     <div className="flex-1">
                                         <p className="font-black text-slate-900 uppercase tracking-tight text-sm sm:text-base">{art.title}</p>
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{art.categories?.name} {art.is_featured && '• Featured'}</p>
@@ -618,8 +624,8 @@ const AdminPage = ({ user, artworks, categories, content, onRefresh }: any) => {
                     <div className="grid grid-cols-1 gap-8 sm:gap-12 glass p-6 sm:p-12 rounded-3xl sm:rounded-[3.5rem]">
                         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
                             <div className="flex flex-col items-center gap-6">
-                                <div className="aspect-[3/4] w-full sm:w-64 rounded-2xl sm:rounded-[2.5rem] bg-slate-50 relative group overflow-hidden shadow-2xl">
-                                    {edit.about_image_url ? <img src={edit.about_image_url} className="w-full h-full object-cover" /> : <User className="w-12 h-12 opacity-10 font-bold" />}
+                                <div className="aspect-[3/4] w-full sm:w-64 rounded-2xl sm:rounded-[2.5rem] bg-slate-100/50 relative group overflow-hidden shadow-2xl flex items-center justify-center p-4">
+                                    {edit.about_image_url ? <img src={edit.about_image_url} className="w-full h-full object-contain" /> : <User className="w-12 h-12 opacity-10 font-bold" />}
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                         <input type="file" accept="image/*" onChange={(e: any) => handleCloudinaryUpload(e.target.files[0], true)} className="hidden" id="abt-up" />
                                         <label htmlFor="abt-up" className="bg-white px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest cursor-pointer hover:bg-pink-soft">Update Photo</label>
@@ -673,6 +679,67 @@ const AdminPage = ({ user, artworks, categories, content, onRefresh }: any) => {
     );
 };
 
+// --- Page: Artwork Detail ---
+const ArtworkDetailPage = ({ artworks }: any) => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const art = artworks.find((a: any) => String(a.id) === String(id));
+
+    useEffect(() => { window.scrollTo(0, 0); }, []);
+
+    if (!art) return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-12 text-center">
+            <h2 className="font-display text-4xl font-black text-slate-900 mb-6">Artwork Not Found</h2>
+            <button onClick={() => navigate("/portfolio")} className="bg-slate-900 text-white px-10 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-pink-deep transition-all">Back to Gallery</button>
+        </div>
+    );
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-32 sm:pt-40 pb-24 sm:pb-32 px-6 max-w-7xl mx-auto">
+            <button onClick={() => navigate(-1)} className="mb-12 flex items-center gap-3 font-display font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-pink-deep transition-colors group">
+                <ArrowRight className="w-5 h-5 rotate-180 group-hover:-translate-x-2 transition-transform" /> Back to Previous
+            </button>
+            
+            <div className="grid lg:grid-cols-[1.5fr_1fr] gap-12 sm:gap-20 items-start">
+                <motion.div 
+                    layoutId={`art-${art.id}`}
+                    className="glass rounded-[2rem] sm:rounded-[4rem] p-4 sm:p-10 overflow-hidden bg-slate-50/50 flex items-center justify-center min-h-[50vh]"
+                >
+                    <img src={art.image_url} alt={art.title} className="w-full h-auto max-h-[85vh] object-contain rounded-2xl shadow-2xl" />
+                </motion.div>
+                
+                <div className="space-y-8 sm:space-y-12 py-4">
+                    <div>
+                        <span className="text-pink-deep/60 font-bold text-[10px] sm:text-xs uppercase tracking-widest mb-4 block">Artwork Detail</span>
+                        <h1 className="font-display text-5xl sm:text-7xl font-black text-slate-900 tracking-tighter mb-8 leading-[0.9]">{art.title}</h1>
+                        <span className="px-6 py-2.5 rounded-full glass text-[10px] text-pink-deep font-black uppercase tracking-widest border border-pink-soft/10">{art.categories?.name || 'Original Work'}</span>
+                    </div>
+                    
+                    {art.description ? (
+                        <div className="space-y-4">
+                            <h3 className="font-display text-xl font-black text-slate-900 uppercase tracking-tight">The Narrative</h3>
+                            <p className="text-slate-500 text-lg sm:text-xl leading-relaxed font-medium">{art.description}</p>
+                        </div>
+                    ) : (
+                        <p className="text-slate-400 italic text-lg">A dreamy piece by Jesskae exploring futuristic aesthetics and nostalgic vibes.</p>
+                    )}
+                    
+                    <div className="pt-12 border-t border-slate-900/5 grid grid-cols-2 gap-8">
+                        <div>
+                            <p className="text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em] mb-2 font-display">Archived</p>
+                            <p className="font-display font-black text-slate-900 text-lg uppercase tracking-widest">{new Date(art.created_at).getFullYear()}</p>
+                        </div>
+                        <div>
+                            <p className="text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em] mb-2 font-display">Series</p>
+                            <p className="font-display font-black text-slate-900 text-lg uppercase tracking-widest">Aureus Piece</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
 
 // --- Main App ---
 
@@ -703,6 +770,7 @@ export default function App() {
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<HomePage artworks={artworks} content={content} />} />
           <Route path="/portfolio" element={<PortfolioGallery artworks={artworks} categories={categories} />} />
+          <Route path="/portfolio/:id" element={<ArtworkDetailPage artworks={artworks} />} />
           <Route path="/about" element={<AboutPage content={content} />} />
           <Route path="/contact" element={<ContactPage content={content} />} />
           <Route path="/admin" element={<AdminPage user={user} artworks={artworks} categories={categories} content={content} onRefresh={refresh} />} />
